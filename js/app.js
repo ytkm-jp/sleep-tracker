@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const wakeTime = document.getElementById('wake-time').value;
         const wakeTemp = document.getElementById('wake-temp').value;
         const quality = document.getElementById('sleep-quality').value;
+        const notes = document.getElementById('sleep-notes').value;
         
         const habits = Array.from(document.querySelectorAll('input[name="habit"]:checked')).map(cb => cb.value);
 
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wakeTemp,
             quality,
             habits,
+            notes,
             duration
         };
 
@@ -112,6 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="habit-tags">
                                 ${log.habits.map(h => `<span class="habit-tag">${h}</span>`).join('')}
                             </div>
+                        ` : ''}
+                        ${log.notes ? `
+                            <div class="item-notes">${log.notes}</div>
                         ` : ''}
                     </div>
                     <div class="item-stats">
