@@ -288,6 +288,7 @@ input[type="range"] {
     align-items: center;
     border: 1px solid var(--glass-border);
     animation: fadeIn 0.5s ease-out;
+    position: relative;
 }
 
 @keyframes fadeIn {
@@ -317,6 +318,30 @@ input[type="range"] {
 
 .quality-tag {
     font-size: 1.2rem;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0;
+    transition: all 0.3s ease;
+    padding: 4px;
+}
+
+.history-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    color: #ef4444;
+    transform: scale(1.2);
 }
 
 .habit-tags {

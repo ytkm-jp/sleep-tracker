@@ -55,6 +55,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Handle individual delete
+    historyList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const id = parseInt(e.target.getAttribute('data-id'));
+            if (confirm('この記録を削除しますか？')) {
+                sleepLogs = sleepLogs.filter(log => log.id !== id);
+                saveLogs();
+                renderLogs();
+            }
+        }
+    });
+
     function calculateDuration(bed, wake) {
         const [bedH, bedM] = bed.split(':').map(Number);
         const [wakeH, wakeM] = wake.split(':').map(Number);
@@ -106,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="duration">${log.duration.hours}時間 ${log.duration.minutes}分</div>
                         <div class="quality-tag">${qualityEmoji}</div>
                     </div>
+                    <button class="delete-btn" data-id="${log.id}">&times;</button>
                 </div>
             `;
         }).join('');
