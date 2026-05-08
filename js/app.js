@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCw_JbTLEW4vfGDkF624dpCf5MMtyTYB7E",
@@ -76,9 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // ログインボタン
+    // ログインボタン（リダイレクト方式に変更）
     document.getElementById('login-btn').addEventListener('click', async () => {
-        await signInWithPopup(auth, provider);
+        try {
+            await signInWithRedirect(auth, provider);
+        } catch (error) {
+            console.error("Login Error:", error);
+            alert("ログインに失敗しました。ブラウザの設定を確認してください。");
+        }
     });
 
     // ログアウトボタン
@@ -91,8 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             // ログイン済み
             document.getElementById('login-btn').style.display = 'none';
-            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('user-info').style.display = 'flex';
             document.getElementById('user-name').textContent = user.displayName;
+            
+            const userPhoto = document.getElementById('user-photo');
+            if (userPhoto) {
+                // Googleの画像URLを取得、なければイニシャル画像
+                const photoUrl = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=random&color=fff`;
+                userPhoto.src = photoUrl;
+                
+                // 画像読み込みエラー時のフォールバック
+                userPhoto.onerror = () => {
+                    userPhoto.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=6366f1&color=fff`;
+                };
+            }
             loadLogs();
         } else {
             // 未ログイン
