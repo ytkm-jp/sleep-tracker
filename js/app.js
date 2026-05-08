@@ -142,7 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderAverage(logs) {
-        if (logs.length === 0) return;
+        if (logs.length === 0) {
+            document.getElementById("avg-duration").textContent = "0:00";
+            document.getElementById("avg-quality").textContent = "-";
+            document.getElementById("avg-temp").textContent = "--℃";
+            return;
+        }
         const avgMinutes = Math.round(
             logs.reduce((sum, log) => sum + log.duration.totalMinutes, 0) / logs.length
         );
@@ -242,8 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
         dateInput.value = today;
     });
 
-    clearBtn.addEventListener('click', async () => {
-        if (confirm('すべての記録を削除しますか？')) {
+    // 全消去ボタンの共通処理
+    async function clearAllLogs() {
+        if (confirm('すべての記録を削除しますか？（この操作は取り消せません）')) {
             const user = auth.currentUser;
             if (!user) return;
             const snapshot = await getDocs(collection(db, "users", auth.currentUser.uid, "sleepLogs"));
@@ -253,7 +259,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChart();
             renderAverage([]);
         }
-    });
+    }
+
+    clearBtn.addEventListener('click', clearAllLogs);
+    const resetStatsBtn = document.getElementById('reset-stats');
+    if (resetStatsBtn) {
+        resetStatsBtn.addEventListener('click', clearAllLogs);
+    }
 
     historyList.addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-btn')) {
