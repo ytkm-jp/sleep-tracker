@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCw_JbTLEW4vfGDkF624dpCf5MMtyTYB7E",
@@ -13,6 +14,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 let chartInstance = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,7 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dateInput.value = today;
 
     async function loadLogs() {
-        const snapshot = await getDocs(collection(db, "sleepLogs"));
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const snapshot = await getDocs(collection(db, "users", user.uid, "sleepLogs"));
         sleepLogs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         sleepLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
         renderLogs();
@@ -70,6 +76,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    // ログインボタン
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        await signInWithPopup(auth, provider);
+    });
+
+    // ログアウトボタン
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await signOut(auth);
+    });
+
+    // ログイン状態の監視
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // ログイン済み
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('user-name').textContent = user.displayName;
+            loadLogs();
+        } else {
+            // 未ログイン
+            document.getElementById('login-btn').style.display = 'block';
+            document.getElementById('user-info').style.display = 'none';
+            sleepLogs = [];
+            renderLogs();
+        }
+    });
 
     function renderAverage(logs) {
         if (logs.length === 0) return;
@@ -105,7 +137,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function saveLogs(log) {
-        await addDoc(collection(db, "sleepLogs"), log);
+        const user = auth.currentUser;
+        if (!user) return;
+        await addDoc(collection(db, "users", user.uid, "sleepLogs"), log);
     }
 
     function renderLogs() {
@@ -172,9 +206,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearBtn.addEventListener('click', async () => {
         if (confirm('すべての記録を削除しますか？')) {
-            const snapshot = await getDocs(collection(db, "sleepLogs"));
-            await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, "sleepLogs", d.id))));
-            await loadLogs();
+            const user = auth.currentUser;
+            if (!user) return;
+            const snapshot = await getDocs(collection(db, "users", auth.currentUser.uid, "sleepLogs"));
+            await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, "users", auth.currentUser.uid, "sleepLogs", d.id))));
+            sleepLogs = [];
+            renderLogs();
+            renderChart();
+            renderAverage([]);
         }
     });
 
@@ -182,11 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('delete-btn')) {
             const id = e.target.getAttribute('data-id');
             if (confirm('この記録を削除しますか？')) {
-                await deleteDoc(doc(db, "sleepLogs", id));
+                const user = auth.currentUser;
+                if (!user) return;
+                await deleteDoc(doc(db, "users", auth.currentUser.uid, "sleepLogs", id));
                 await loadLogs();
             }
         }
     });
-
-    loadLogs();
 });
