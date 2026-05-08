@@ -35,6 +35,7 @@ function renderChart() {
         },
         options: {                     // ✅ dataの外に出す
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     beginAtZero: true,
@@ -51,12 +52,58 @@ function renderChart() {
     });
 }
 
-    // Load data from LocalStorage
-    let sleepLogs = JSON.parse(localStorage.getItem('sleepLogs')) || [];
+//平均表示
+function renderAverage(logs) {
+    if (logs.length === 0) return;
+    // 平均睡眠時間
+    const avgMinutes = Math.round(
+        logs.reduce((sum, log) => sum + log.duration.totalMinutes, 0) / logs.length
+    );
+    const h = Math.floor(avgMinutes / 60);
+    const m = avgMinutes % 60;
+    document.getElementById("avg-duration").textContent = 
+        `${h}:${String(m).padStart(2, "0")}`;
+    // 平均睡眠の質
+    const avgQuality = (
+        logs.reduce((sum, log) => sum + log.quality, 0) / logs.length
+    ).toFixed(1);
+    document.getElementById("avg-quality").textContent = avgQuality;
+    // 平均起床時体温
+    const avgTemp = (
+        logs.reduce((sum, log) => sum + log.temperature, 0) / logs.length
+    ).toFixed(1);
+    document.getElementById("avg-temp").textContent = `${avgTemp}℃`;
+    }
+    
+    // タブ切り替えのイベント
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        // activeクラスを切り替え
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
 
+        // 範囲に応じてログを絞り込む
+        const range = btn.dataset.range;
+        const filteredLogs = filterLogs(range);
+        renderAverages(filteredLogs);
+    });
+});
+
+// ログを期間で絞り込む
+function filterLogs(range) {
+    const now = new Date();
+    if (range === "all") return sleepLogs;
+
+    const days = range === "week" ? 7 : 30;
+    return sleepLogs.filter(log => {
+        const diff = (now - new Date(log.date)) / (1000 * 60 * 60 * 24);
+        return diff <= days;
+    });
+}
     // Initialize display
     renderLogs();
     renderChart();
+    renderAverages();
 
     // Handle form submission
     sleepForm.addEventListener('submit', (e) => {
