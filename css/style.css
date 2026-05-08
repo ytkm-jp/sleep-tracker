@@ -134,10 +134,11 @@ h2 {
     gap: 0.5rem;
 }
 
-label {
+label, .form-label {
     font-size: 0.875rem;
     color: var(--text-muted);
     font-weight: 500;
+    display: block; /* スパン要素でもブロックとして扱う */
 }
 
 input[type="date"],

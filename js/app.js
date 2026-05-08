@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCw_JbTLEW4vfGDkF624dpCf5MMtyTYB7E",
@@ -21,6 +21,15 @@ let chartInstance = null;
 document.addEventListener('DOMContentLoaded', () => {
     let sleepLogs = [];
 
+    // リダイレクト後の結果を確認
+    getRedirectResult(auth).catch((error) => {
+        console.error("Redirect Result Error:", error);
+        // エラーコードが auth/web-storage-unsupported の場合はCookie設定が原因
+        if (error.code === 'auth/web-storage-unsupported') {
+            alert("ブラウザのCookie設定によりログインできません。設定を確認してください。");
+        }
+    });
+
     const sleepForm = document.getElementById('sleep-form');
     const historyList = document.getElementById('history-list');
     const sleepChart = document.getElementById('sleep-chart');
@@ -34,12 +43,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = auth.currentUser;
         if (!user) return;
 
-        const snapshot = await getDocs(collection(db, "users", user.uid, "sleepLogs"));
-        sleepLogs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        sleepLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
-        renderLogs();
-        renderChart();
-        renderAverage(sleepLogs);
+        try {
+            const snapshot = await getDocs(collection(db, "users", user.uid, "sleepLogs"));
+            sleepLogs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            sleepLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // 1. まずはリストをすぐに表示（ユーザーへのレスポンス優先）
+            renderLogs();
+            
+            // 2. 重い処理（グラフ描画と集計）は次の描画フレームに回す
+            requestAnimationFrame(() => {
+                renderChart();
+                renderAverage(sleepLogs);
+            });
+        } catch (error) {
+            console.error("Error loading logs:", error);
+        }
     }
 
     function renderChart() {
@@ -76,13 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // ログインボタン（リダイレクト方式に変更）
+    // ログインボタン（PCでの確実性を優先してポップアップに戻す）
     document.getElementById('login-btn').addEventListener('click', async () => {
         try {
-            await signInWithRedirect(auth, provider);
+            await signInWithPopup(auth, provider);
         } catch (error) {
             console.error("Login Error:", error);
-            alert("ログインに失敗しました。ブラウザの設定を確認してください。");
+            // COOPエラー等でポップアップが閉じない場合があるが、ログイン自体は成功することが多い
         }
     });
 
@@ -93,8 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ログイン状態の監視
     onAuthStateChanged(auth, (user) => {
+        console.log("Auth State Changed. User:", user); // デバッグ用ログ
         if (user) {
             // ログイン済み
+            console.log("Login detected:", user.displayName);
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('user-info').style.display = 'flex';
             document.getElementById('user-name').textContent = user.displayName;
