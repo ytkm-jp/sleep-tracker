@@ -35,7 +35,7 @@ function renderChart() {
         },
         options: {                     // ✅ dataの外に出す
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
             scales: {
                 y: {
                     beginAtZero: true,
