@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const sleepForm = document.getElementById('sleep-form');
     const historyList = document.getElementById('history-list');
+    const sleepChart = document.getElementById('sleep-chart');
     const clearBtn = document.getElementById('clear-data');
     const dateInput = document.getElementById('sleep-date');
 
@@ -8,11 +9,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     dateInput.value = today;
 
+    // 記録を分析するチャートを表示する
+function renderChart() {
+    const ctx = sleepChart.getContext("2d");
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: sleepLogs.map(log => log.date),
+            datasets: [
+                {
+                    label: "睡眠時間",
+                    data: sleepLogs.map(log => log.duration.totalMinutes),
+                    backgroundColor: "#4f46e5",
+                    borderColor: "#4f46e5",
+                    yAxisID: "y"       // ✅ "y"に修正
+                },
+                {
+                    label: "睡眠の質",
+                    data: sleepLogs.map(log => log.quality),
+                    backgroundColor: "#f59e0b",  // ✅ 色を変える
+                    borderColor: "#f59e0b",
+                    yAxisID: "y2"
+                }
+            ]
+        },
+        options: {                     // ✅ dataの外に出す
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: "left"
+                },
+                y2: {
+                    beginAtZero: true,
+                    position: "right",
+                    min: 0,
+                    max: 5
+                }
+            }
+        }
+    });
+}
+
     // Load data from LocalStorage
     let sleepLogs = JSON.parse(localStorage.getItem('sleepLogs')) || [];
 
     // Initialize display
     renderLogs();
+    renderChart();
 
     // Handle form submission
     sleepForm.addEventListener('submit', (e) => {

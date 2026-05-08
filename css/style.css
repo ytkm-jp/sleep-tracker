@@ -396,3 +396,9 @@ footer {
     .history-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .item-stats { text-align: left; }
 }
+
+canvas {
+    max-width: 100%;
+    height: auto;
+    display:block;
+}
