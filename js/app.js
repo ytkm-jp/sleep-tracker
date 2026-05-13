@@ -223,9 +223,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processAdminData(allLogs) {
+        // 外れ値を除外（3時間未満、または12時間以上のデータを取り除く）
+        const filteredLogs = allLogs.filter(log => {
+            const minutes = log.duration.totalMinutes;
+            return minutes >= 180 && minutes <= 720;
+        });
+
         // 日付ごとにグループ化して平均を出す
         const dailyAgg = {};
-        allLogs.forEach(log => {
+        filteredLogs.forEach(log => {
             if (!dailyAgg[log.date]) {
                 dailyAgg[log.date] = { duration: 0, quality: 0, count: 0 };
             }
@@ -238,9 +244,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const avgDurations = sortedDates.map(d => Math.round(dailyAgg[d].duration / dailyAgg[d].count));
         const avgQualities = sortedDates.map(d => (dailyAgg[d].quality / dailyAgg[d].count).toFixed(1));
 
-        // 全体平均の表示
-        const totalMinutes = Math.round(allLogs.reduce((s, l) => s + l.duration.totalMinutes, 0) / allLogs.length);
-        const totalQuality = (allLogs.reduce((s, l) => s + l.quality, 0) / allLogs.length).toFixed(1);
+        // 全体平均の表示（フィルタリング後のデータを使用）
+        const totalMinutes = filteredLogs.length > 0 
+            ? Math.round(filteredLogs.reduce((s, l) => s + l.duration.totalMinutes, 0) / filteredLogs.length)
+            : 0;
+        const totalQuality = filteredLogs.length > 0 
+            ? (filteredLogs.reduce((s, l) => s + l.quality, 0) / filteredLogs.length).toFixed(1)
+            : "0.0";
         
         document.getElementById('admin-avg-duration').textContent = 
             `${Math.floor(totalMinutes/60)}:${String(totalMinutes%60).padStart(2, "0")}`;
