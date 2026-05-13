@@ -187,6 +187,35 @@
             </div>
         </section>
 
+        <!-- 管理者用ダッシュボード（特定UIDのみ表示） -->
+        <section id="admin-dashboard" class="glass-card" style="display:none; border-top: 2px solid var(--primary);">
+            <div class="section-header">
+                <h2>📊 管理者ダッシュボード（学校全体集計）</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="admin-download-csv" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;">CSVダウンロード</button>
+                    <div id="admin-user-count" class="stat-note" style="font-size: 1rem; color: var(--primary);">
+                        参加人数: --人
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-item">
+                    <div class="stat-label">全体平均睡眠時間</div>
+                    <div class="stat-value" id="admin-avg-duration">0:00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">全体平均の質</div>
+                    <div class="stat-value" id="admin-avg-quality">-</div>
+                </div>
+            </div>
+
+            <div class="chart-container" style="position: relative; width: 100%;">
+                <h3>全体の睡眠推移</h3>
+                <canvas id="admin-all-chart"></canvas>
+            </div>
+        </section>
+
         <footer>
             <p>&copy; 2026 Sleepy Tracker. Designed for your better rest by ytkm.</p>
         </footer>

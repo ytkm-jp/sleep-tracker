@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, collectionGroup, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -17,6 +17,9 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 let chartInstance = null;
+let adminChartInstance = null;
+let allLogsForCSV = [];
+const ADMIN_UID = "UHi5BIbO0jXYxNLQlDM70xTRwqh1";
 
 document.addEventListener('DOMContentLoaded', () => {
     let sleepLogs = [];
@@ -128,9 +131,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ログイン状態の監視
     onAuthStateChanged(auth, (user) => {
-        console.log("Auth State Changed. User:", user); // デバッグ用ログ
         if (user) {
-            // ログイン済み
+            if (user.uid === ADMIN_UID) {
+                const adminDash = document.getElementById('admin-dashboard');
+                if (adminDash) {
+                    adminDash.style.display = 'block';
+                    // 履歴セクション（mainの中）の前に挿入して、分析結果として見やすくする
+                    const main = document.querySelector('main');
+                    const historySection = document.getElementById('history-section');
+                    if (main && historySection) {
+                        main.insertBefore(adminDash, historySection);
+                    }
+                    loadAdminData();
+                }
+            }
             console.log("Login detected:", user.displayName);
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('user-info').style.display = 'flex';
@@ -180,6 +194,138 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             document.getElementById("avg-temp").textContent = "--℃";
         }
+    }
+
+    async function loadAdminData() {
+        try {
+            const allLogsQuery = query(collectionGroup(db, "sleepLogs"));
+            const snapshot = await getDocs(allLogsQuery);
+            // UIDをデータに含めて取得
+            const allLogs = snapshot.docs.map(d => ({
+                ...d.data(),
+                uid: d.ref.parent.parent.id // ユーザー別の分析ができるようにUIDを付与
+            }));
+            allLogsForCSV = allLogs;
+            
+            // 参加人数（ユニークなユーザーID）をカウント
+            const userIds = new Set(allLogs.map(log => log.uid));
+            document.getElementById('admin-user-count').textContent = `参加人数: ${userIds.size}人`;
+            
+            if (allLogs.length > 0) {
+                processAdminData(allLogs);
+            }
+        } catch (error) {
+            console.error("Admin Data Load Error:", error);
+            if (error.code === 'failed-precondition') {
+                console.warn("Firestoreのインデックス作成が必要です。コンソールのリンクをクリックしてください。");
+            }
+        }
+    }
+
+    function processAdminData(allLogs) {
+        // 日付ごとにグループ化して平均を出す
+        const dailyAgg = {};
+        allLogs.forEach(log => {
+            if (!dailyAgg[log.date]) {
+                dailyAgg[log.date] = { duration: 0, quality: 0, count: 0 };
+            }
+            dailyAgg[log.date].duration += log.duration.totalMinutes;
+            dailyAgg[log.date].quality += log.quality;
+            dailyAgg[log.date].count += 1;
+        });
+
+        const sortedDates = Object.keys(dailyAgg).sort();
+        const avgDurations = sortedDates.map(d => Math.round(dailyAgg[d].duration / dailyAgg[d].count));
+        const avgQualities = sortedDates.map(d => (dailyAgg[d].quality / dailyAgg[d].count).toFixed(1));
+
+        // 全体平均の表示
+        const totalMinutes = Math.round(allLogs.reduce((s, l) => s + l.duration.totalMinutes, 0) / allLogs.length);
+        const totalQuality = (allLogs.reduce((s, l) => s + l.quality, 0) / allLogs.length).toFixed(1);
+        
+        document.getElementById('admin-avg-duration').textContent = 
+            `${Math.floor(totalMinutes/60)}:${String(totalMinutes%60).padStart(2, "0")}`;
+        document.getElementById('admin-avg-quality').textContent = totalQuality;
+
+        renderAdminChart(sortedDates, avgDurations, avgQualities);
+    }
+
+    function renderAdminChart(labels, durations, qualities) {
+        const ctx = document.getElementById('admin-all-chart').getContext('2d');
+        if (adminChartInstance) adminChartInstance.destroy();
+        adminChartInstance = new Chart(ctx, {
+            type: "bar", // 全体はバーチャートの方が見やすい場合がある
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "全体平均睡眠時間 (分)",
+                        data: durations,
+                        backgroundColor: "rgba(99, 102, 241, 0.5)",
+                        borderColor: "#6366f1",
+                        borderWidth: 1,
+                        yAxisID: "y"
+                    },
+                    {
+                        label: "全体平均の質",
+                        data: qualities,
+                        type: "line",
+                        borderColor: "#f59e0b",
+                        backgroundColor: "#f59e0b",
+                        yAxisID: "y2"
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, position: "left", title: { display: true, text: '分' } },
+                    y2: { beginAtZero: true, position: "right", min: 0, max: 5, title: { display: true, text: '質' } }
+                }
+            }
+        });
+    }
+
+    // CSVダウンロード機能
+    const csvBtn = document.getElementById('admin-download-csv');
+    if (csvBtn) {
+        csvBtn.addEventListener('click', () => {
+            if (allLogsForCSV.length === 0) {
+                alert("ダウンロードするデータがありません。");
+                return;
+            }
+
+            // ヘッダー（項目名）
+            const headers = ["ユーザーID", "日付", "就寝時間", "起床時間", "睡眠時間(分)", "睡眠の質", "体温", "習慣", "メモ"];
+            
+            // データ行の作成
+            const rows = allLogsForCSV.map(log => [
+                log.uid,
+                log.date,
+                log.bedTime,
+                log.wakeTime,
+                log.duration.totalMinutes,
+                log.quality,
+                log.wakeTemp || "",
+                (log.habits || []).join(" "),
+                (log.notes || "").replace(/\n/g, " ") // 改行をスペースに置換
+            ]);
+
+            // カンマ区切りのテキストを作成
+            const csvContent = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+
+            // BOM（Excelの文字化け対策）を付与してBlob作成
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8" });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `sleep_data_all_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
     }
 
     function filterLogs(range) {
