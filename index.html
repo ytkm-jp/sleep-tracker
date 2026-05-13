@@ -146,6 +146,11 @@
     <div>
         <section id = "history-list-chart" class="glass-card">
             <h2>睡眠の履歴分析</h2>
+            <div class = "tab-buttons chart-tabs">
+                <button class = "tab-btn active" data-range = "all">全体</button>
+                <button class = "tab-btn" data-range = "week">週間</button>
+                <button class = "tab-btn" data-range = "month">月間</button>
+            </div>
             <div style="position: relative; width: 100%;">
             <canvas id="sleep-chart"></canvas>  <!-- width/heightを削除 -->
         </div>

@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 2. 重い処理（グラフ描画と集計）は次の描画フレームに回す
             requestAnimationFrame(() => {
-                renderChart();
+                // 初期表示は「全体」
+                renderChart(sleepLogs);
                 renderAverage(sleepLogs);
             });
         } catch (error) {
@@ -61,24 +62,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderChart() {
+    function renderChart(logs = sleepLogs) {
         const ctx = sleepChart.getContext("2d");
         if (chartInstance) chartInstance.destroy();
+
+        // グラフ用に古い順に並び替え
+        const displayLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+
         chartInstance = new Chart(ctx, {
             type: "line",
             data: {
-                labels: sleepLogs.map(log => log.date),
+                labels: displayLogs.map(log => log.date),
                 datasets: [
                     {
                         label: "睡眠時間",
-                        data: sleepLogs.map(log => log.duration.totalMinutes),
+                        data: displayLogs.map(log => log.duration.totalMinutes),
                         backgroundColor: "#4f46e5",
                         borderColor: "#4f46e5",
                         yAxisID: "y"
                     },
                     {
                         label: "睡眠の質",
-                        data: sleepLogs.map(log => log.quality),
+                        data: displayLogs.map(log => log.quality),
                         backgroundColor: "#f59e0b",
                         borderColor: "#f59e0b",
                         yAxisID: "y2"
@@ -89,8 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: true,
                 scales: {
-                    y: { beginAtZero: true, position: "left" },
-                    y2: { beginAtZero: true, position: "right", min: 0, max: 5 }
+                    y: { 
+                        beginAtZero: true, 
+                        position: "left",
+                        title: { display: true, text: '分' }
+                    },
+                    y2: { 
+                        beginAtZero: true, 
+                        position: "right", 
+                        min: 0, 
+                        max: 5,
+                        title: { display: true, text: '質' },
+                        grid: { drawOnChartArea: false }
+                    }
                 }
             }
         });
@@ -170,12 +186,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.querySelectorAll(".tab-btn").forEach(btn => {
+    // 統計用タブ
+    document.querySelectorAll("#average-stats .tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll("#average-stats .tab-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             const range = btn.dataset.range;
             renderAverage(filterLogs(range));
+        });
+    });
+
+    // グラフ用タブ
+    document.querySelectorAll(".chart-tabs .tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".chart-tabs .tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const range = btn.dataset.range;
+            renderChart(filterLogs(range));
         });
     });
 
@@ -256,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, "users", auth.currentUser.uid, "sleepLogs", d.id))));
             sleepLogs = [];
             renderLogs();
-            renderChart();
+            renderChart(sleepLogs);
             renderAverage([]);
         }
     }
