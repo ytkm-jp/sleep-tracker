@@ -172,8 +172,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("avg-duration").textContent = `${h}:${String(m).padStart(2, "0")}`;
         const avgQuality = (logs.reduce((sum, log) => sum + log.quality, 0) / logs.length).toFixed(1);
         document.getElementById("avg-quality").textContent = avgQuality;
-        const avgTemp = (logs.reduce((sum, log) => sum + log.temperature, 0) / logs.length).toFixed(1);
-        document.getElementById("avg-temp").textContent = `${avgTemp}℃`;
+        // 体温が記録されているデータのみを抽出
+        const tempLogs = logs.filter(log => log.wakeTemp && !isNaN(log.wakeTemp));
+        if (tempLogs.length > 0) {
+            const avgTemp = (tempLogs.reduce((sum, log) => sum + log.wakeTemp, 0) / tempLogs.length).toFixed(1);
+            document.getElementById("avg-temp").textContent = `${avgTemp}℃`;
+        } else {
+            document.getElementById("avg-temp").textContent = "--℃";
+        }
     }
 
     function filterLogs(range) {
