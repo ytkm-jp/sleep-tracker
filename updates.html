@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アップデート履歴 - Sleepy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/updates.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="updates-container">
+        <nav class="header-nav" style="justify-content: center; margin-bottom: 2rem;">
+            <a href="index.html" class="nav-link">🏠 ホーム</a>
+            <a href="qa.html" class="nav-link">💬 質問箱</a>
+            <a href="updates.html" class="nav-link active">📋 アップデート履歴</a>
+        </nav>
+
+        <div class="updates-header">
+            <h1>📋 アップデート履歴</h1>
+            <p>Sleepy の更新・改善の記録です</p>
+        </div>
+
+        <!-- v1.5 -->
+        <div class="version-block">
+            <div class="version-dot"></div>
+            <div class="version-meta">
+                <span class="version-tag">v1.5</span>
+                <span class="version-date">2026年5月14日</span>
+            </div>
+            <div class="version-title">個人データエクスポート・重複防止・UX改善</div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    自分の睡眠データをCSVでダウンロードできる「データダウンロード」ボタンを追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    1日に複数の記録を保存できないよう重複チェックを追加（その日のデータを削除すれば再記録可）
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-improve">改善</span>
+                    深夜0〜4時にアプリを開くと、日付フィールドが自動で「前日」にセットされるように変更
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-fix">FIX</span>
+                    日付の自動設定がUTC基準になっていた問題を修正（日本時間基準に変更）
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    匿名で質問できる質問箱機能を追加
+                </li>
+            </ul>
+        </div>
+
+        <!-- v1.4 -->
+        <div class="version-block">
+            <div class="version-dot"></div>
+            <div class="version-meta">
+                <span class="version-tag">v1.4</span>
+                <span class="version-date">2026年5月14日</span>
+            </div>
+            <div class="version-title">習慣と睡眠の質の相関分析</div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    就寝前の各習慣が睡眠スコアにどの程度影響しているかを可視化する「習慣と質の関係」セクションを追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-improve">改善</span>
+                    習慣の「あり」「なし」それぞれの平均スコアとその差（インパクト）を影響度の高い順に表示
+                </li>
+            </ul>
+        </div>
+
+        <!-- v1.3 -->
+        <div class="version-block">
+            <div class="version-dot"></div>
+            <div class="version-meta">
+                <span class="version-tag">v1.3</span>
+                <span class="version-date">2026年5月13日</span>
+            </div>
+            <div class="version-title">管理者ダッシュボード（学校全体集計）</div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    特定の管理者アカウントのみが参照できる学校全体の睡眠統計ダッシュボードを追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    全ユーザーのデータを集計したCSVを管理者がダウンロードできる機能を追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-improve">改善</span>
+                    外れ値（3時間未満・12時間以上）を除外して平均値を算出するように変更
+                </li>
+            </ul>
+        </div>
+
+        <!-- v1.2 -->
+        <div class="version-block">
+            <div class="version-dot"></div>
+            <div class="version-meta">
+                <span class="version-tag">v1.2</span>
+                <span class="version-date">2026年5月8日</span>
+            </div>
+            <div class="version-title">グラフ・統計機能の強化</div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    睡眠時間・質の推移を表示するラインチャートを追加（全体／週間／月間の切り替え対応）
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    平均睡眠時間・質・体温をカード表示する統計セクションを追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-fix">FIX</span>
+                    モバイル端末でGoogleログインできない問題を修正（リダイレクト方式に対応）
+                </li>
+            </ul>
+        </div>
+
+        <!-- v1.1 -->
+        <div class="version-block">
+            <div class="version-dot"></div>
+            <div class="version-meta">
+                <span class="version-tag">v1.1</span>
+                <span class="version-date">2026年5月7日</span>
+            </div>
+            <div class="version-title">体温記録・就寝前習慣チェックリスト</div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    起床時の体温を記録できるフィールドを追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    就寝前の習慣（カフェイン控え、スマホ控え、入浴など）をチェックリストで記録できる機能を追加
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    Googleアカウントでのログイン・クラウド同期（Firebase）を実装
+                </li>
+            </ul>
+        </div>
+
+        <!-- v1.0 -->
+        <div class="version-block">
+            <div class="version-dot"></div>
+            <div class="version-meta">
+                <span class="version-tag">v1.0</span>
+                <span class="version-date">2026年5月7日</span>
+            </div>
+            <div class="version-title">🎉 初回リリース</div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    就寝・起床時間の記録と睡眠時間の自動計算
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    睡眠の質（1〜5）をスライダーで評価
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    睡眠履歴の一覧表示と個別削除
+                </li>
+                <li class="change-item">
+                    <span class="change-badge badge-new">NEW</span>
+                    メモ欄でその日の体調や気分を自由記入
+                </li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Sleepy Tracker. Designed for your better rest by ytkm.</p>
+        </footer>
+    </div>
+</body>
+</html>

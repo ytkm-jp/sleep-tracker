@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>質問箱 - Sleepy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/qa.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="qa-container">
+        <!-- ナビゲーション -->
+        <nav class="header-nav" style="justify-content: center; margin-bottom: 2rem;">
+            <a href="index.html" class="nav-link">🏠 ホーム</a>
+            <a href="qa.html" class="nav-link active">💬 質問箱</a>
+            <a href="updates.html" class="nav-link">📋 アップデート履歴</a>
+        </nav>
+
+        <div class="qa-header">
+            <h1>💬 質問箱</h1>
+            <p>睡眠や使い方に関する質問を送れます。回答は公開されます。</p>
+        </div>
+
+        <!-- 質問投稿フォーム -->
+        <section id="question-form-section" class="glass-card">
+            <h2>質問を送る</h2>
+            <div id="form-login-prompt" class="login-prompt" style="display:none;">
+                <p>質問を送るにはログインが必要です。</p>
+            </div>
+            <div id="question-form-area">
+                <textarea id="question-input" class="qa-textarea" placeholder="睡眠に関することや、アプリの使い方など、なんでも聞いてください..." maxlength="400"></textarea>
+                <div class="submit-row">
+                    <div style="display:flex; gap:1rem; align-items:center;">
+                        <label class="anon-row">
+                            <input type="checkbox" id="anon-check"> 匿名で送る
+                        </label>
+                        <span class="char-count" id="char-count">0 / 400</span>
+                    </div>
+                    <button class="btn-submit-q" id="submit-question-btn">送信する</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Q&Aリスト -->
+        <section class="glass-card">
+            <h2>Q &amp; A</h2>
+            <div id="qa-list" class="qa-list">
+                <div class="no-questions">まだ質問はありません。最初の質問を送ってみましょう！</div>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Sleepy Tracker. Designed for your better rest by ytkm.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import {
+            getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc,
+            doc, query, orderBy, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import {
+            getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCw_JbTLEW4vfGDkF624dpCf5MMtyTYB7E",
+            authDomain: "sleep-tracker-b2ffd.firebaseapp.com",
+            projectId: "sleep-tracker-b2ffd",
+            storageBucket: "sleep-tracker-b2ffd.firebasestorage.app",
+            messagingSenderId: "904987298822",
+            appId: "1:904987298822:web:ccd101593cf09032714787"
+        };
+
+        const ADMIN_UID = "UHi5BIbO0jXYxNLQlDM70xTRwqh1";
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+
+        // 文字数カウント
+        const questionInput = document.getElementById('question-input');
+        const charCount     = document.getElementById('char-count');
+        const submitBtn     = document.getElementById('submit-question-btn');
+
+        questionInput.addEventListener('input', () => {
+            const len = questionInput.value.length;
+            charCount.textContent = `${len} / 400`;
+            charCount.className = 'char-count' + (len > 380 ? ' over' : len > 300 ? ' warn' : '');
+            submitBtn.disabled = len === 0 || len > 400;
+        });
+        submitBtn.disabled = true;
+
+        // 認証状態
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            const formArea   = document.getElementById('question-form-area');
+            const loginPrompt = document.getElementById('form-login-prompt');
+
+            if (user) {
+                formArea.style.display = 'block';
+                loginPrompt.style.display = 'none';
+            } else {
+                formArea.style.display = 'none';
+                loginPrompt.style.display = 'block';
+            }
+            await loadQuestions();
+        });
+
+        // 質問の読み込み・描画
+        async function loadQuestions() {
+            const qaList = document.getElementById('qa-list');
+            const q = query(collection(db, "questions"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+
+            if (snap.empty) {
+                qaList.innerHTML = '<div class="no-questions">まだ質問はありません。最初の質問を送ってみましょう！</div>';
+                return;
+            }
+
+            const isAdmin = currentUser && currentUser.uid === ADMIN_UID;
+
+            qaList.innerHTML = snap.docs.map(d => {
+                const data = d.data();
+                const id   = d.id;
+                const date = data.createdAt?.toDate
+                    ? data.createdAt.toDate().toLocaleDateString('ja-JP')
+                    : '';
+                const isAnon = data.anonymous;
+                const avatar = (!isAnon && data.userPhoto)
+                    ? `<img src="${data.userPhoto}" class="q-avatar" alt="avatar">`
+                    : `<div class="q-avatar-placeholder">🙈</div>`;
+                const name = isAnon ? '<span class="q-anon">匿名</span>' : `<span class="q-name">${data.userName || '不明'}</span>`;
+
+                const answerHtml = data.answer
+                    ? `<div class="answer-block">
+                           <div class="answer-label">💡 回答</div>
+                           <div class="answer-text">${escHtml(data.answer)}</div>
+                       </div>`
+                    : (isAdmin ? '' : '<div class="answer-block" style="opacity:0.4;"><div class="answer-label">回答待ち...</div></div>');
+
+                const adminHtml = isAdmin ? `
+                    <div class="admin-reply-form">
+                        <textarea class="admin-reply-textarea" id="reply-${id}" placeholder="回答を入力...">${escHtml(data.answer || '')}</textarea>
+                        <div class="admin-reply-actions">
+                            <button class="btn-delete-q" data-id="${id}">削除</button>
+                            <button class="btn-reply" data-id="${id}">回答を保存</button>
+                        </div>
+                    </div>` : '';
+
+                return `
+                    <div class="qa-card" id="card-${id}">
+                        <div class="q-block">
+                            ${avatar}
+                            <div class="q-body">
+                                <div class="q-meta">
+                                    ${name}
+                                    <span class="q-date">${date}</span>
+                                </div>
+                                <div class="q-text">${escHtml(data.text)}</div>
+                            </div>
+                        </div>
+                        ${answerHtml}
+                        ${adminHtml}
+                    </div>`;
+            }).join('');
+
+            // 管理者ボタンのイベント
+            document.querySelectorAll('.btn-reply').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id    = btn.dataset.id;
+                    const text  = document.getElementById(`reply-${id}`).value.trim();
+                    if (!text) return;
+                    btn.disabled = true;
+                    btn.textContent = '保存中...';
+                    await updateDoc(doc(db, "questions", id), { answer: text });
+                    await loadQuestions();
+                });
+            });
+
+            document.querySelectorAll('.btn-delete-q').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('この質問を削除しますか？')) return;
+                    await deleteDoc(doc(db, "questions", btn.dataset.id));
+                    await loadQuestions();
+                });
+            });
+        }
+
+        // 質問送信
+        submitBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+            const text = questionInput.value.trim();
+            if (!text) return;
+            const isAnon = document.getElementById('anon-check').checked;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '送信中...';
+
+            try {
+                await addDoc(collection(db, "questions"), {
+                    text,
+                    anonymous: isAnon,
+                    userId:    currentUser.uid,
+                    userName:  isAnon ? null : currentUser.displayName,
+                    userPhoto: isAnon ? null : currentUser.photoURL,
+                    answer:    null,
+                    createdAt: serverTimestamp()
+                });
+
+                questionInput.value = '';
+                charCount.textContent = '0 / 400';
+                charCount.className = 'char-count';
+                await loadQuestions();
+            } catch (err) {
+                console.error('送信エラー:', err);
+                if (err.code === 'permission-denied') {
+                    alert('送信に失敗しました。\nFirestoreのセキュリティルールに questions コレクションの権限が設定されていません。\nFirebase コンソールでルールを更新してください。');
+                } else {
+                    alert(`送信に失敗しました: ${err.message}`);
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送信する';
+            }
+        });
+
+        // HTMLエスケープ
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
