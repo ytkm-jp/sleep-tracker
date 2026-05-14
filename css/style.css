@@ -425,9 +425,33 @@ input[type="range"] {
     padding: 2rem;
 }
 
+/* Guide Section */
+.guide-section {
+    margin-top: 2rem;
+}
+
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.guide-item h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.guide-item p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
 footer {
     text-align: center;
-    margin-top: 3rem;
+    padding: 2rem 0 1rem;
     color: var(--text-muted);
     font-size: 0.8rem;
 }
