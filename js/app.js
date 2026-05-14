@@ -549,4 +549,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // 個人データのCSVダウンロード
+    const downloadMyCsvBtn = document.getElementById('download-my-csv');
+    if (downloadMyCsvBtn) {
+        downloadMyCsvBtn.addEventListener('click', () => {
+            if (sleepLogs.length === 0) {
+                alert('ダウンロードするデータがありません。');
+                return;
+            }
+
+            const headers = ['日付', '就寝時間', '起床時間', '睡眠時間(分)', '睡眠の質', '体温', '習慣', 'メモ'];
+            const rows = sleepLogs.map(log => [
+                log.date,
+                log.bedTime,
+                log.wakeTime,
+                log.duration.totalMinutes,
+                log.quality,
+                log.wakeTemp || '',
+                (log.habits || []).join(' '),
+                (log.notes || '').replace(/\n/g, ' ')
+            ]);
+
+            const csvContent = [headers, ...rows]
+                .map(r => r.map(v => `"${v}"`).join(','))
+                .join('\n');
+
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8' });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const _d = new Date();
+            const localDate = `${_d.getFullYear()}-${pad(_d.getMonth() + 1)}-${pad(_d.getDate())}`;
+            a.download = `my_sleep_data_${localDate}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
 });
