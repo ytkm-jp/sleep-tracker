@@ -141,6 +141,12 @@ label, .form-label {
     display: block; /* スパン要素でもブロックとして扱う */
 }
 
+.label-hint {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 400;
+}
+
 input[type="date"],
 input[type="time"],
 input[type="number"],
@@ -561,5 +567,91 @@ canvas {
         max-width: 320px;
         justify-content: space-between;
         padding: 8px 16px;
+    }
+}
+
+/* Habit Analysis Styles */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.analysis-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.analysis-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.analysis-habit {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.analysis-emoji {
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.analysis-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.analysis-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.analysis-diff {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.analysis-diff.positive { color: #10b981; }
+.analysis-diff.negative { color: #ef4444; }
+
+.analysis-details {
+    text-align: right;
+}
+
+.impact-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: block;
+}
+
+.comparison-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Responsive tweak for analysis grid */
+@media (max-width: 480px) {
+    .analysis-grid {
+        grid-template-columns: 1fr;
     }
 }

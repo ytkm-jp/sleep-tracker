@@ -49,7 +49,10 @@
                 <form id="sleep-form">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="sleep-date">日付</label>
+                            <label for="sleep-date">
+                                日付
+                                <span class="label-hint">（0時を回っても昨日の日付を入力）</span>
+                            </label>
                             <input type="date" id="sleep-date" required>
                         </div>
                         <div class="form-group">
@@ -184,6 +187,18 @@
                     <div class="stat-value" id="avg-temp">--℃</div>
                     <div class="stat-note">平均値</div>
                 </div>
+            </div>
+        </section>
+
+        <!-- 習慣分析セクション -->
+        <section id="habit-analysis-section" class="glass-card">
+            <div class="section-header">
+                <h2>習慣と質の関係</h2>
+                <div class="stat-note">習慣の有無によるスコア差</div>
+            </div>
+            <div id="habit-analysis-container" class="analysis-grid">
+                <!-- JavaScript will populate this -->
+                <p class="empty-msg">十分なデータが集まると、ここに分析結果が表示されます。</p>
             </div>
         </section>
 
