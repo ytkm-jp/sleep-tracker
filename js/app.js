@@ -164,6 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             console.log("Login detected:", user.displayName);
             document.getElementById('login-btn').style.display = 'none';
+            const consentText = document.getElementById('login-consent-text');
+            if (consentText) consentText.style.display = 'none';
+            
             document.getElementById('user-info').style.display = 'flex';
             document.getElementById('user-name').textContent = user.displayName;
             
@@ -182,6 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // 未ログイン
             document.getElementById('login-btn').style.display = 'block';
+            const consentText = document.getElementById('login-consent-text');
+            if (consentText) consentText.style.display = 'block';
+            
             document.getElementById('user-info').style.display = 'none';
             sleepLogs = [];
             renderLogs();

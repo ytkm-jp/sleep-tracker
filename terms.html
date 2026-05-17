@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>利用規約 &amp; プライバシーポリシー - Sleepy</title>
+    <meta name="description" content="Sleepy の利用規約とプライバシーポリシー。安全で透明なデータ運用のためのガイドライン。">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/terms.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+    <header>
+        <h1>Sleepy</h1>
+        <p>良質な睡眠は、より良い明日への第一歩！</p>
+    </header>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="terms-container">
+        <!-- ナビゲーション -->
+        <nav class="header-nav" style="justify-content: center; margin-bottom: 2rem;">
+            <a href="index.html" class="nav-link">🏠 ホーム</a>
+            <a href="qa.html" class="nav-link">💬 質問箱</a>
+            <a href="updates.html" class="nav-link">📋 アップデート履歴</a>
+            <a href="terms.html" class="nav-link active">📄 利用規約</a>
+        </nav>
+
+        <section class="glass-card terms-card">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem; text-align: center; font-weight: 700; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;">📄 利用規約とプライバシーポリシー</h1>
+            <div class="last-update">最終更新日: 2026年5月17日</div>
+
+            <div class="important-notice">
+                <span class="notice-icon">💡</span>
+                <div class="notice-text">
+                    本アプリ「Sleepy」は、<strong>高校における「探究活動」のための研究プロトタイプ</strong>です。ご提供いただく睡眠記録や認証データは厳重に管理され、研究目的以外には一切使用されません。また、ご自身のデータはいつでもご自身の手で即時に消去することができます。
+                </div>
+            </div>
+
+            <p>本利用規約およびプライバシーポリシー（以下「本規約」）は、34班が提供する睡眠記録・分析アプリ「Sleepy」（以下「本アプリ」）の利用条件および個人情報の取り扱いを定めるものです。利用者の皆様には、本規約に同意した上で本アプリをご利用いただきます。</p>
+
+            <h2>第1条（収集する情報および収集方法）</h2>
+            <p>本アプリは、サービスの提供および探究活動における分析を行うため、以下の情報を収集します。</p>
+            <ol>
+                <li><strong>認証関連情報:</strong> Googleアカウント認証時に取得される「ユーザーID（UID）」「表示名（ニックネーム）」「プロフィール写真のURL」。※パスワードや決済情報は収集しません。</li>
+                <li><strong>睡眠記録データ:</strong> 日付、就寝時間、起床時間、睡眠時間（自動算出）、睡眠の質（1〜5段階）、起床時体温、就寝前の習慣チェック、メモ。</li>
+                <li><strong>質問データ:</strong> 質問箱に投稿された質問内容（匿名・記名選択可）。</li>
+            </ol>
+
+            <h2>第2条（情報の利用目的）</h2>
+            <p>収集した情報は、以下の目的でのみ使用します。</p>
+            <ul>
+                <li>本アプリ内での個人データの可視化、履歴保持、および平均統計値の算出。</li>
+                <li><strong>探究活動（学術研究）における睡眠習慣と質の相関分析、および学校全体の集計統計の可視化。</strong></li>
+                <li>質問箱に対する管理者からの回答および機能改善。</li>
+                <li>商業目的、広告配信、その他の目的への転用は一切行いません。</li>
+            </ul>
+
+            <h2>第3条（データの管理とアクセス権）</h2>
+            <p>収集したデータは、クラウドデータベース（Firebase Firestore）に安全に保存され、以下のセキュリティ対策を実施します。</p>
+            <ul>
+                <li><strong>閲覧制限の徹底:</strong> ユーザー自身の睡眠データは、そのユーザー本人、およびシステム管理者（34班の探究メンバー・指導教諭）のみがアクセス可能です。他の一般ユーザーに個人の睡眠記録が開示されることはありません。</li>
+                <li><strong>学校全体集計:</strong> 管理者ダッシュボードおよびCSVエクスポートで閲覧できるのは、個人を特定しにくいように配慮された「全体平均値」や「ID化されたログデータ」のみです。</li>
+            </ul>
+
+            <h2>第4条（データの消去・自己決定権）</h2>
+            <p>利用者の皆様には、ご自身のデータに対する完全な自己決定権があります。</p>
+            <ul>
+                <li><strong>データの全消去:</strong> アプリ内の履歴セクションにある「全消去」ボタンをクリックすることで、Firestoreデータベースからご自身のすべての睡眠履歴を<strong>即座に完全削除</strong>することができます。この操作は元に戻せません。</li>
+                <li><strong>アカウントの削除:</strong> 本アプリの使用をやめ、アカウント自体の削除をご希望の場合は、管理者までお問い合わせいただければ対応いたします。</li>
+            </ul>
+
+            <h2>第5条（免責事項）</h2>
+            <ul>
+                <li>本アプリは教育・探究活動用の試作品であり、その動作およびデータの恒久的な保存を保証するものではありません。</li>
+                <li>本アプリが提供する分析やアドバイスは、専門的な医学的診断、治療、予防措置に代わるものではありません。睡眠に関する著しい問題がある場合は、専門の医療機関にご相談ください。</li>
+                <li>本アプリの利用によって生じた直接的・間接的な損害について、開発者（34班メンバー）は一切の責任を負いかねます。</li>
+            </ul>
+
+            <h2>第6条（本規約の変更）</h2>
+            <p>探究活動の進行やシステムのアップデートに伴い、本規約を改定することがあります。改定された規約は本アプリ上に掲載された時点から効力を生じるものとします。</p>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Sleepy Tracker. Designed for your better rest by ytkm.</p>
+        </footer>
+    </div>
+</body>
+</html>

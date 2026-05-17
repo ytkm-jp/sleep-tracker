@@ -1,0 +1,77 @@
+/*利用規約ページ*/
+
+.terms-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.terms-card h2 {
+    font-size: 1.3rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--primary);
+    padding-left: 0.75rem;
+    color: white;
+    font-weight: 600;
+}
+
+.terms-card h3 {
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #818cf8;
+}
+
+.terms-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+
+.terms-card ul, .terms-card ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    color: var(--text-muted);
+}
+
+.terms-card li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.important-notice {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.notice-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.notice-text {
+    font-size: 0.9rem;
+    color: #a5b4fc;
+    line-height: 1.6;
+}
+
+.notice-text strong {
+    color: white;
+}
+
+.last-update {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: right;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+}
