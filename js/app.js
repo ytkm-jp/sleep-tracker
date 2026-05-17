@@ -326,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('admin-avg-quality').textContent = totalQuality;
 
         renderAdminChart(sortedDates, avgDurations, avgQualities);
+        renderAdminHabitAnalysis(filteredLogs);
     }
 
     function renderAdminChart(labels, durations, qualities) {
@@ -362,6 +363,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+    // 全体集計の習慣分析
+    function renderAdminHabitAnalysis(logs) {
+        const container = document.getElementById('admin-habit-analysis-container');
+        if (!container) return;
+
+        // 分析には最低限のデータが必要
+        if (logs.length < 3) {
+            container.innerHTML = '<p class="empty-msg">十分なデータ（3件以上）が集まると、ここに全体の習慣の分析結果が表示されます。</p>';
+            return;
+        }
+
+        const results = habitInfo.map(habit => {
+            const withHabit = logs.filter(l => l.habits && l.habits.includes(habit.emoji));
+            const withoutHabit = logs.filter(l => !l.habits || !l.habits.includes(habit.emoji));
+
+            // 両方のグループにデータがないと計算できない
+            if (withHabit.length === 0 || withoutHabit.length === 0) return null;
+
+            const avgWith = withHabit.reduce((sum, l) => sum + l.quality, 0) / withHabit.length;
+            const avgWithout = withoutHabit.reduce((sum, l) => sum + l.quality, 0) / withoutHabit.length;
+            const diff = avgWith - avgWithout;
+
+            return { ...habit, avgWith, avgWithout, diff, count: withHabit.length };
+        }).filter(r => r !== null);
+
+        if (results.length === 0) {
+            container.innerHTML = '<p class="empty-msg">習慣の有無による差を比較するには、全体で同じ習慣を行ったり行わなかったりする記録が必要です。</p>';
+            return;
+        }
+
+        // インパクト（絶対値）順にソート
+        results.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+        container.innerHTML = results.map(r => `
+            <div class="analysis-card">
+                <div class="analysis-habit">
+                    <div class="analysis-emoji">${r.emoji}</div>
+                    <div class="analysis-label">${r.label}</div>
+                </div>
+                <div class="analysis-stats">
+                    <div class="analysis-diff ${r.diff > 0 ? 'positive' : (r.diff < 0 ? 'negative' : '')}">
+                        <span class="impact-label">影響</span>
+                        ${r.diff > 0 ? '+' : ''}${r.diff.toFixed(1)}
+                    </div>
+                    <div class="analysis-details">
+                        <div class="comparison-text">あり: ${r.avgWith.toFixed(1)}</div>
+                        <div class="comparison-text">なし: ${r.avgWithout.toFixed(1)}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 
     // CSVダウンロード機能
