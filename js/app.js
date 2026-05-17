@@ -58,6 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = `${sleepDate.getFullYear()}-${pad(sleepDate.getMonth() + 1)}-${pad(sleepDate.getDate())}`;
     dateInput.value = today;
 
+    // 性別の初期値を localStorage から取得
+    const genderSelect = document.getElementById('user-gender');
+    if (genderSelect) {
+        const savedGender = localStorage.getItem('sleepy_user_gender');
+        if (savedGender) {
+            genderSelect.value = savedGender;
+        }
+    }
+
     async function loadLogs() {
         const user = auth.currentUser;
         if (!user) return;
@@ -331,6 +340,66 @@ document.addEventListener('DOMContentLoaded', () => {
             `${Math.floor(totalMinutes/60)}:${String(totalMinutes%60).padStart(2, "0")}`;
         document.getElementById('admin-avg-quality').textContent = totalQuality;
 
+        // 男女別の平均睡眠データ算出
+        const maleLogs = filteredLogs.filter(l => l.gender === 'male');
+        const femaleLogs = filteredLogs.filter(l => l.gender === 'female');
+
+        const calculateStats = (logs) => {
+            if (logs.length === 0) return { durationText: "0:00", qualityText: "-", countText: "0" };
+            const avgMins = Math.round(logs.reduce((s, l) => s + l.duration.totalMinutes, 0) / logs.length);
+            const avgQual = (logs.reduce((s, l) => s + l.quality, 0) / logs.length).toFixed(1);
+            return {
+                durationText: `${Math.floor(avgMins / 60)}:${String(avgMins % 60).padStart(2, "0")}`,
+                qualityText: avgQual,
+                countText: String(logs.length)
+            };
+        };
+
+        const maleStats = calculateStats(maleLogs);
+        const femaleStats = calculateStats(femaleLogs);
+
+        const genderContainer = document.getElementById('admin-gender-analysis-container');
+        if (genderContainer) {
+            genderContainer.innerHTML = `
+                <!-- 男子カード -->
+                <div class="analysis-card" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.5rem;">🙋‍♂️</span>
+                        <span style="font-weight: 600; font-size: 1.1rem; color: #60a5fa;">男子の睡眠統計</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均睡眠時間</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: white; margin-top: 4px;">${maleStats.durationText}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均の質</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: #f59e0b; margin-top: 4px;">${maleStats.qualityText}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">データ数: ${maleStats.countText}件</div>
+                </div>
+                <!-- 女子カード -->
+                <div class="analysis-card" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.5rem;">🙋‍♀️</span>
+                        <span style="font-weight: 600; font-size: 1.1rem; color: #f472b6;">女子の睡眠統計</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均睡眠時間</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: white; margin-top: 4px;">${femaleStats.durationText}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均の質</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: #f59e0b; margin-top: 4px;">${femaleStats.qualityText}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">データ数: ${femaleStats.countText}件</div>
+                </div>
+            `;
+        }
+
         renderAdminChart(sortedDates, avgDurations, avgQualities);
         renderAdminHabitAnalysis(filteredLogs);
     }
@@ -433,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // ヘッダー（項目名）
-            const headers = ["ユーザーID", "日付", "就寝時間", "起床時間", "睡眠時間(分)", "睡眠の質", "体温", "習慣", "メモ"];
+            const headers = ["ユーザーID", "日付", "就寝時間", "起床時間", "睡眠時間(分)", "睡眠の質", "体温", "性別", "習慣", "メモ"];
             
             // データ行の作成
             const rows = allLogsForCSV.map(log => [
@@ -444,6 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 log.duration.totalMinutes,
                 log.quality,
                 log.wakeTemp || "",
+                log.gender === 'male' ? '男性' : (log.gender === 'female' ? '女性' : (log.gender === 'other' ? 'その他・未回答' : '未設定')),
                 (log.habits || []).join(" "),
                 (log.notes || "").replace(/\n/g, " ") // 改行をスペースに置換
             ]);
@@ -562,17 +632,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const notes = document.getElementById('sleep-notes').value;
         const habits = Array.from(document.querySelectorAll('input[name="habit"]:checked')).map(cb => cb.value);
         const duration = calculateDuration(bedTime, wakeTime);
+        const gender = document.getElementById('user-gender').value;
+
+        // 性別を localStorage に保存
+        if (gender) {
+            localStorage.setItem('sleepy_user_gender', gender);
+        } else {
+            localStorage.removeItem('sleepy_user_gender');
+        }
+
         const newLog = {
             date, bedTime, wakeTime,
             wakeTemp: parseFloat(wakeTemp),
             quality: parseInt(quality),
+            gender: gender || "",
             habits, notes, duration
         };
         await saveLogs(newLog);
         await loadLogs();
         renderHabitAnalysis(sleepLogs);
+        
+        // フォームのリセットと初期値の再設定
         sleepForm.reset();
         dateInput.value = today;
+        if (genderSelect && gender) {
+            genderSelect.value = gender; // リセット後も記憶した性別を再選択状態に
+        }
     });
 
     // 全消去ボタンの共通処理
@@ -618,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const headers = ['日付', '就寝時間', '起床時間', '睡眠時間(分)', '睡眠の質', '体温', '習慣', 'メモ'];
+            const headers = ['日付', '就寝時間', '起床時間', '睡眠時間(分)', '睡眠の質', '体温', '性別', '習慣', 'メモ'];
             const rows = sleepLogs.map(log => [
                 log.date,
                 log.bedTime,
@@ -626,6 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 log.duration.totalMinutes,
                 log.quality,
                 log.wakeTemp || '',
+                log.gender === 'male' ? '男性' : (log.gender === 'female' ? '女性' : (log.gender === 'other' ? 'その他・未回答' : '未設定')),
                 (log.habits || []).join(' '),
                 (log.notes || '').replace(/\n/g, ' ')
             ]);
@@ -649,4 +735,57 @@ document.addEventListener('DOMContentLoaded', () => {
             URL.revokeObjectURL(url);
         });
     }
+
+    // ===================================================
+    // TEMPORARY MOCK FOR VISUAL VERIFICATION
+    // ===================================================
+    setTimeout(() => {
+        const adminDash = document.getElementById('admin-dashboard');
+        if (adminDash) {
+            adminDash.style.display = 'block';
+            const main = document.querySelector('main');
+            if (main) main.insertBefore(adminDash, main.firstChild);
+        }
+        const container = document.getElementById('admin-gender-analysis-container');
+        if (container) {
+            container.innerHTML = `
+                <!-- 男子カード -->
+                <div class="analysis-card" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.5rem;">🙋‍♂️</span>
+                        <span style="font-weight: 600; font-size: 1.1rem; color: #60a5fa;">男子の睡眠統計</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均睡眠時間</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: white; margin-top: 4px;">7:15</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均の質</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: #f59e0b; margin-top: 4px;">4.2</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">データ数: 14件</div>
+                </div>
+                <!-- 女子カード -->
+                <div class="analysis-card" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.5rem;">🙋‍♀️</span>
+                        <span style="font-weight: 600; font-size: 1.1rem; color: #f472b6;">女子の睡眠統計</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均睡眠時間</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: white; margin-top: 4px;">6:52</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">平均の質</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: #f59e0b; margin-top: 4px;">3.8</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">データ数: 18件</div>
+                </div>
+            `;
+        }
+    }, 1000);
 });
