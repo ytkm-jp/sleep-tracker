@@ -18,6 +18,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 let chartInstance = null;
 let adminChartInstance = null;
+let adminGenderCombinedChartInstance = null;
 let allLogsForCSV = [];
 const ADMIN_UID = "UHi5BIbO0jXYxNLQlDM70xTRwqh1";
 
@@ -400,7 +401,41 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
+        // 男女別の日別集計
+        const dailyMaleAgg = {};
+        const dailyFemaleAgg = {};
+
+        sortedDates.forEach(date => {
+            dailyMaleAgg[date] = { duration: 0, quality: 0, count: 0 };
+            dailyFemaleAgg[date] = { duration: 0, quality: 0, count: 0 };
+        });
+
+        maleLogs.forEach(log => {
+            if (!dailyMaleAgg[log.date]) {
+                dailyMaleAgg[log.date] = { duration: 0, quality: 0, count: 0 };
+            }
+            dailyMaleAgg[log.date].duration += log.duration.totalMinutes;
+            dailyMaleAgg[log.date].quality += log.quality;
+            dailyMaleAgg[log.date].count += 1;
+        });
+
+        femaleLogs.forEach(log => {
+            if (!dailyFemaleAgg[log.date]) {
+                dailyFemaleAgg[log.date] = { duration: 0, quality: 0, count: 0 };
+            }
+            dailyFemaleAgg[log.date].duration += log.duration.totalMinutes;
+            dailyFemaleAgg[log.date].quality += log.quality;
+            dailyFemaleAgg[log.date].count += 1;
+        });
+
+        const maleDurations = sortedDates.map(d => dailyMaleAgg[d].count > 0 ? Math.round(dailyMaleAgg[d].duration / dailyMaleAgg[d].count) : null);
+        const maleQualities = sortedDates.map(d => dailyMaleAgg[d].count > 0 ? parseFloat((dailyMaleAgg[d].quality / dailyMaleAgg[d].count).toFixed(1)) : null);
+        
+        const femaleDurations = sortedDates.map(d => dailyFemaleAgg[d].count > 0 ? Math.round(dailyFemaleAgg[d].duration / dailyFemaleAgg[d].count) : null);
+        const femaleQualities = sortedDates.map(d => dailyFemaleAgg[d].count > 0 ? parseFloat((dailyFemaleAgg[d].quality / dailyFemaleAgg[d].count).toFixed(1)) : null);
+
         renderAdminChart(sortedDates, avgDurations, avgQualities);
+        renderAdminGenderCharts(sortedDates, maleDurations, femaleDurations, maleQualities, femaleQualities);
         renderAdminHabitAnalysis(filteredLogs);
     }
 
@@ -435,6 +470,71 @@ document.addEventListener('DOMContentLoaded', () => {
                 scales: {
                     y: { beginAtZero: true, position: "left", title: { display: true, text: '分' } },
                     y2: { beginAtZero: true, position: "right", min: 0, max: 5, title: { display: true, text: '質' } }
+                }
+            }
+        });
+    }
+
+    function renderAdminGenderCharts(labels, maleDurations, femaleDurations, maleQualities, femaleQualities) {
+        const ctx = document.getElementById('admin-gender-combined-chart').getContext('2d');
+        if (adminGenderCombinedChartInstance) adminGenderCombinedChartInstance.destroy();
+        adminGenderCombinedChartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "男子の平均睡眠時間 (分)",
+                        data: maleDurations,
+                        borderColor: "#60a5fa",
+                        backgroundColor: "#60a5fa",
+                        spanGaps: true,
+                        yAxisID: "y"
+                    },
+                    {
+                        label: "女子の平均睡眠時間 (分)",
+                        data: femaleDurations,
+                        borderColor: "#f472b6",
+                        backgroundColor: "#f472b6",
+                        spanGaps: true,
+                        yAxisID: "y"
+                    },
+                    {
+                        label: "男子の平均の質",
+                        data: maleQualities,
+                        borderColor: "#3b82f6", // 濃い青
+                        backgroundColor: "#3b82f6",
+                        borderDash: [5, 5],
+                        spanGaps: true,
+                        yAxisID: "y2"
+                    },
+                    {
+                        label: "女子の平均の質",
+                        data: femaleQualities,
+                        borderColor: "#ec4899", // 濃いピンク
+                        backgroundColor: "#ec4899",
+                        borderDash: [5, 5],
+                        spanGaps: true,
+                        yAxisID: "y2"
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        position: "left",
+                        title: { display: true, text: '分' }
+                    },
+                    y2: { 
+                        beginAtZero: true, 
+                        position: "right",
+                        min: 0, 
+                        max: 5,
+                        title: { display: true, text: '質' },
+                        grid: { drawOnChartArea: false }
+                    }
                 }
             }
         });
