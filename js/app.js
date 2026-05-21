@@ -48,6 +48,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const sleepChart = document.getElementById('sleep-chart');
     const clearBtn = document.getElementById('clear-data');
     const dateInput = document.getElementById('sleep-date');
+    const loadSampleDataBtn = document.getElementById('load-sample-data');
+
+    const sampleLogs = [
+        { id: 'sample-1', date: '2026-05-12', bedTime: '23:20', wakeTime: '06:10', wakeTemp: 36.3, quality: 3, gender: 'female', habits: ['📖', '🛁'], notes: '読書と入浴で落ち着いた夜でした。', duration: { hours: 6, minutes: 50, totalMinutes: 410 } },
+        { id: 'sample-2', date: '2026-05-13', bedTime: '00:15', wakeTime: '07:05', wakeTemp: 36.7, quality: 4, gender: 'female', habits: ['📱', '☕'], notes: 'スマホ控えを意識。', duration: { hours: 6, minutes: 50, totalMinutes: 410 } },
+        { id: 'sample-3', date: '2026-05-14', bedTime: '23:45', wakeTime: '06:40', wakeTemp: 36.5, quality: 4, gender: 'female', habits: ['🔦'], notes: 'ライト制限が効いた感触。', duration: { hours: 6, minutes: 55, totalMinutes: 415 } },
+        { id: 'sample-4', date: '2026-05-15', bedTime: '22:50', wakeTime: '06:30', wakeTemp: 36.6, quality: 5, gender: 'female', habits: ['🧘‍♂️', '📖'], notes: 'ストレッチと読書でゆったり。', duration: { hours: 7, minutes: 40, totalMinutes: 460 } },
+        { id: 'sample-5', date: '2026-05-16', bedTime: '00:05', wakeTime: '06:55', wakeTemp: 36.2, quality: 3, gender: 'female', habits: ['📱'], notes: '夜更かししたので少し眠りが浅め。', duration: { hours: 6, minutes: 50, totalMinutes: 410 } },
+        { id: 'sample-6', date: '2026-05-17', bedTime: '23:10', wakeTime: '06:20', wakeTemp: 36.4, quality: 4, gender: 'female', habits: ['☕', '📖'], notes: 'カフェイン少なめで良好。', duration: { hours: 7, minutes: 10, totalMinutes: 430 } },
+        { id: 'sample-7', date: '2026-05-18', bedTime: '23:55', wakeTime: '07:00', wakeTemp: 36.8, quality: 5, gender: 'female', habits: ['🔦', '🛁'], notes: '入浴後の寝付きが良かった。', duration: { hours: 7, minutes: 5, totalMinutes: 425 } },
+        { id: 'sample-8', date: '2026-05-19', bedTime: '22:40', wakeTime: '06:10', wakeTemp: 36.6, quality: 4, gender: 'female', habits: ['📖'], notes: '早めに布団に入った。', duration: { hours: 7, minutes: 30, totalMinutes: 450 } },
+        { id: 'sample-9', date: '2026-05-20', bedTime: '23:25', wakeTime: '06:25', wakeTemp: 36.5, quality: 4, gender: 'female', habits: ['🧘‍♂️', '📖'], notes: '睡眠の質が安定。', duration: { hours: 7, minutes: 0, totalMinutes: 420 } },
+        { id: 'sample-10', date: '2026-05-21', bedTime: '23:50', wakeTime: '07:00', wakeTemp: 36.7, quality: 5, gender: 'female', habits: ['🔦', '📖'], notes: '週末に向けて体調良好。', duration: { hours: 7, minutes: 10, totalMinutes: 430 } }
+    ];
 
     // 深夜0〜4時は「就寝した日 = 前日」として扱う
     const now = new Date();
@@ -67,6 +81,58 @@ document.addEventListener('DOMContentLoaded', () => {
             genderSelect.value = savedGender;
         }
     }
+
+    // フォームデータの自動保存と復元
+    const FORM_STORAGE_KEY = 'sleepy_form_data';
+    
+    function saveFormData() {
+        const formData = {
+            bedTime: document.getElementById('bed-time').value,
+            wakeTime: document.getElementById('wake-time').value,
+            wakeTemp: document.getElementById('wake-temp').value,
+            sleepQuality: document.getElementById('sleep-quality').value,
+            sleepNotes: document.getElementById('sleep-notes').value,
+            habits: Array.from(document.querySelectorAll('input[name="habit"]:checked')).map(cb => cb.value)
+        };
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+    }
+
+    function restoreFormData() {
+        const saved = localStorage.getItem(FORM_STORAGE_KEY);
+        if (!saved) return;
+        
+        try {
+            const formData = JSON.parse(saved);
+            if (formData.bedTime) document.getElementById('bed-time').value = formData.bedTime;
+            if (formData.wakeTime) document.getElementById('wake-time').value = formData.wakeTime;
+            if (formData.wakeTemp) document.getElementById('wake-temp').value = formData.wakeTemp;
+            if (formData.sleepQuality) document.getElementById('sleep-quality').value = formData.sleepQuality;
+            if (formData.sleepNotes) document.getElementById('sleep-notes').value = formData.sleepNotes;
+            
+            // 習慣チェックボックスの復元
+            document.querySelectorAll('input[name="habit"]').forEach(cb => {
+                cb.checked = formData.habits && formData.habits.includes(cb.value);
+            });
+        } catch (error) {
+            console.error('Failed to restore form data:', error);
+        }
+    }
+
+    // フォーム要素の変更時に自動保存
+    const formElements = [
+        'bed-time', 'wake-time', 'wake-temp', 'sleep-quality', 'sleep-notes'
+    ];
+    formElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', saveFormData);
+    });
+    
+    document.querySelectorAll('input[name="habit"]').forEach(cb => {
+        cb.addEventListener('change', saveFormData);
+    });
+
+    // ページ読み込み時にフォームデータを復元
+    restoreFormData();
 
     async function loadLogs() {
         const user = auth.currentUser;
@@ -92,12 +158,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getWeekStartKey(dateString) {
+        const date = new Date(dateString);
+        const local = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const day = local.getDay();
+        const diff = local.getDate() - day + (day === 0 ? -6 : 1);
+        local.setDate(diff);
+        return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}`;
+    }
+
     function renderChart(logs = sleepLogs) {
         const ctx = sleepChart.getContext("2d");
         if (chartInstance) chartInstance.destroy();
 
         // グラフ用に古い順に並び替え
         const displayLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const weekBoundaries = [];
+        for (let i = 1; i < displayLogs.length; i++) {
+            if (getWeekStartKey(displayLogs[i].date) !== getWeekStartKey(displayLogs[i - 1].date)) {
+                weekBoundaries.push(i);
+            }
+        }
+
+        const weeklyBoundaryPlugin = {
+            id: "weekly-boundary-lines",
+            beforeDraw(chart) {
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                if (!xScale || !yScale || weekBoundaries.length === 0) return;
+
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.strokeStyle = "rgba(99, 102, 241, 0.55)";
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+
+                weekBoundaries.forEach(index => {
+                    const x = xScale.getPixelForTick(index);
+                    ctx.beginPath();
+                    ctx.moveTo(x, yScale.top);
+                    ctx.lineTo(x, yScale.bottom);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
 
         chartInstance = new Chart(ctx, {
             type: "line",
@@ -138,7 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         grid: { drawOnChartArea: false }
                     }
                 }
-            }
+            },
+            plugins: [weeklyBoundaryPlugin]
         });
     }
     // ログインボタン（PCでの確実性を優先してポップアップに戻す）
@@ -668,6 +775,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    if (loadSampleDataBtn) {
+        loadSampleDataBtn.addEventListener('click', () => {
+            sleepLogs = [...sampleLogs];
+            renderLogs();
+            renderChart(sleepLogs);
+            renderAverage(sleepLogs);
+            renderHabitAnalysis(sleepLogs);
+        });
+    }
+
     async function saveLogs(log) {
         const user = auth.currentUser;
         if (!user) return;
@@ -758,6 +875,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (genderSelect && gender) {
             genderSelect.value = gender; // リセット後も記憶した性別を再選択状態に
         }
+        
+        // 保存したフォームデータをクリア
+        localStorage.removeItem(FORM_STORAGE_KEY);
     });
 
     // 全消去ボタンの共通処理

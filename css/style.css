@@ -156,6 +156,35 @@ h2 {
     font-weight: 600;
 }
 
+.chart-caption {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #d1d5db;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.chart-actions {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.chart-sample-note {
+    font-size: 0.9rem;
+    color: #a5b4fc;
+    max-width: 520px;
+    text-align: center;
+}
+
 /* Form Styles */
 .form-grid {
     display: grid;
