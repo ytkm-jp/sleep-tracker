@@ -2,9 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // 各ユーザーは自分のデータのみ読み書き可
-    // admin カスタムクレームを持つユーザーは全データ読み取り可
     match /users/{userId}/sleepLogs/{logId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 管理者はコレクショングループクエリで全ユーザーのsleepLogsを読み取り可
+    match /{path=**}/sleepLogs/{logId} {
       allow read: if request.auth != null && request.auth.token.admin == true;
     }
 
