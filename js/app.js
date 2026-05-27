@@ -20,7 +20,6 @@ let chartInstance = null;
 let adminChartInstance = null;
 let adminGenderCombinedChartInstance = null;
 let allLogsForCSV = [];
-const ADMIN_UID = "UHi5BIbO0jXYxNLQlDM70xTRwqh1";
 
 const habitInfo = [
     { emoji: '☕', label: 'カフェイン控え' },
@@ -266,18 +265,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // ログイン状態の監視
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            if (user.uid === ADMIN_UID) {
-                const adminDash = document.getElementById('admin-dashboard');
-                if (adminDash) {
-                    adminDash.style.display = 'block';
-                    // 履歴セクション（mainの中）の前に挿入して、分析結果として見やすくする
-                    const main = document.querySelector('main');
-                    const historySection = document.getElementById('history-section');
-                    if (main && historySection) {
-                        main.insertBefore(adminDash, historySection);
+            if (user.getIdTokenResult) {
+                user.getIdTokenResult().then((idTokenResult) => {
+                    if (idTokenResult.claims.admin) {
+                        const adminDash = document.getElementById('admin-dashboard');
+                        if (adminDash) {
+                            adminDash.style.display = 'block';
+                            // 履歴セクション（mainの中）の前に挿入して、分析結果として見やすくする
+                            const main = document.querySelector('main');
+                            const historySection = document.getElementById('history-section');
+                            if (main && historySection) {
+                                main.insertBefore(adminDash, historySection);
+                            }
+                            loadAdminData();
+                        }
                     }
-                    loadAdminData();
-                }
+                }).catch((error) => {
+                    console.error("Token error:", error);
+                });
             }
             console.log("Login detected:", user.displayName);
             document.getElementById('login-btn').style.display = 'none';
