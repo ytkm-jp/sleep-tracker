@@ -98,13 +98,12 @@
             appId: "1:904987298822:web:ccd101593cf09032714787"
         };
 
-        const ADMIN_UID = "UHi5BIbO0jXYxNLQlDM70xTRwqh1";
-
         const app = initializeApp(firebaseConfig);
         const db  = getFirestore(app);
         const auth = getAuth(app);
 
         let currentUser = null;
+        let currentUserIsAdmin = false;
 
         // 文字数カウント
         const questionInput = document.getElementById('question-input');
@@ -122,10 +121,17 @@
         // 認証状態
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
+            currentUserIsAdmin = false;
             const formArea   = document.getElementById('question-form-area');
             const loginPrompt = document.getElementById('form-login-prompt');
 
             if (user) {
+                try {
+                    const tokenResult = await user.getIdTokenResult();
+                    currentUserIsAdmin = tokenResult.claims.admin === true;
+                } catch (err) {
+                    console.error('管理者権限の確認に失敗しました:', err);
+                }
                 formArea.style.display = 'block';
                 loginPrompt.style.display = 'none';
             } else {
@@ -146,7 +152,7 @@
                 return;
             }
 
-            const isAdmin = currentUser && currentUser.uid === ADMIN_UID;
+            const isAdmin = currentUserIsAdmin;
 
             qaList.innerHTML = snap.docs.map(d => {
                 const data = d.data();

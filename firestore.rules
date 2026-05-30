@@ -1,24 +1,63 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function isValidQuestionCreate() {
+      let fields = [
+          "text",
+          "anonymous",
+          "userId",
+          "userName",
+          "userPhoto",
+          "answer",
+          "createdAt"
+        ];
+
+      return request.resource.data.keys().hasOnly(fields)
+        && request.resource.data.keys().hasAll(fields)
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 400
+        && request.resource.data.anonymous is bool
+        && request.resource.data.userId == request.auth.uid
+        && (request.resource.data.userName == null
+          || (request.resource.data.userName is string
+            && request.resource.data.userName.size() <= 100))
+        && (request.resource.data.userPhoto == null
+          || (request.resource.data.userPhoto is string
+            && request.resource.data.userPhoto.size() <= 2048
+            && request.resource.data.userPhoto.matches("https://[^\"'<> ]+")))
+        && request.resource.data.answer == null
+        && request.resource.data.createdAt == request.time;
+    }
+
     // 各ユーザーは自分のデータのみ読み書き可
     match /users/{userId}/sleepLogs/{logId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if signedIn() && request.auth.uid == userId;
     }
 
     // 管理者はコレクショングループクエリで全ユーザーのsleepLogsを読み取り可
     match /{path=**}/sleepLogs/{logId} {
-      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow read: if isAdmin();
     }
 
     // Q&A collections
     match /questions/{questionId} {
-      allow read, write: if request.auth != null;
+      allow read: if signedIn();
+      allow create: if signedIn() && isValidQuestionCreate();
+      allow update, delete: if isAdmin();
     }
 
     match /answers/{answerId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
   }
 }
