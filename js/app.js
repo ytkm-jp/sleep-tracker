@@ -240,19 +240,39 @@ document.addEventListener('DOMContentLoaded', () => {
             plugins: [weeklyBoundaryPlugin]
         });
     }
-    // ログインボタン（PCでの確実性を優先してポップアップに戻す）
+    // ログインボタン（GitHub Pagesはリダイレクト、ローカルはポップアップ）
     document.getElementById('login-btn').addEventListener('click', async () => {
         try {
-            await signInWithPopup(auth, provider);
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalhost) {
+                await signInWithPopup(auth, provider);
+            } else {
+                await signInWithRedirect(auth, provider);
+            }
         } catch (error) {
             console.error("Login Error:", error);
-            // COOPエラー等でポップアップが閉じない場合があるが、ログイン自体は成功することが多い
+            if (error.code === 'auth/popup-blocked') {
+                // ポップアップがブロックされた場合はリダイレクトにフォールバック
+                try {
+                    await signInWithRedirect(auth, provider);
+                } catch (redirectError) {
+                    console.error("Redirect Error:", redirectError);
+                }
+            }
         }
     });
 
     // ログアウトボタン
     document.getElementById('logout-btn').addEventListener('click', async () => {
-        await signOut(auth);
+        try {
+            await signOut(auth);
+            // ローカルストレージをクリア
+            localStorage.removeItem(FORM_STORAGE_KEY);
+            localStorage.removeItem('sleepy_user_gender');
+            console.log("Logged out and localStorage cleared");
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
     });
 
     // ログイン状態の監視
