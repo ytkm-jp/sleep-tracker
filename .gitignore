@@ -1,3 +1,4 @@
 serviceAccountKey.json
 functions/serviceAccountKey.json
 functions
+js/firebase-config.js
