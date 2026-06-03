@@ -26,9 +26,17 @@ const habitInfo = [
 document.addEventListener('DOMContentLoaded', () => {
     let sleepLogs = [];
 
-    // リダイレクト後の結果を確認
-    getRedirectResult(auth).catch((error) => {
+    let redirectResultProcessed = false;
+
+    // リダイレクト後の結果を確認（これを先に済ませる）
+    getRedirectResult(auth).then((result) => {
+        if (result) {
+            console.log("Redirect login successful:", result.user.displayName);
+        }
+        redirectResultProcessed = true;
+    }).catch((error) => {
         console.error("Redirect Result Error:", error);
+        redirectResultProcessed = true;
         // エラーコードが auth/web-storage-unsupported の場合はCookie設定が原因
         if (error.code === 'auth/web-storage-unsupported') {
             alert("ブラウザのCookie設定によりログインできません。設定を確認してください。");
@@ -240,20 +248,29 @@ document.addEventListener('DOMContentLoaded', () => {
             plugins: [weeklyBoundaryPlugin]
         });
     }
-    // ログインボタン（GitHub Pagesはリダイレクト、ローカルはポップアップ）
+    // ログインボタン（ポップアップまたはリダイレクト）
     document.getElementById('login-btn').addEventListener('click', async () => {
+        // リダイレクト処理が完了するまで待つ
+        if (!redirectResultProcessed) {
+            alert("ログイン処理中です。少々お待ちください。");
+            return;
+        }
+
         try {
             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocalhost) {
+                // ローカル開発時はポップアップを試す
                 await signInWithPopup(auth, provider);
             } else {
+                // GitHub Pagesはリダイレクトを使用
                 await signInWithRedirect(auth, provider);
             }
         } catch (error) {
             console.error("Login Error:", error);
-            if (error.code === 'auth/popup-blocked') {
-                // ポップアップがブロックされた場合はリダイレクトにフォールバック
+            // ポップアップがブロックされたか失敗した場合はリダイレクトにフォールバック
+            if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
                 try {
+                    console.log("Falling back to redirect...");
                     await signInWithRedirect(auth, provider);
                 } catch (redirectError) {
                     console.error("Redirect Error:", redirectError);
