@@ -20,6 +20,8 @@ let chartInstance = null;
 let adminChartInstance = null;
 let adminGenderCombinedChartInstance = null;
 let allLogsForCSV = [];
+let adminAverageLogs = [];
+let adminAverageRange = "all";
 
 const habitInfo = [
     { emoji: '☕', label: 'カフェイン控え' },
@@ -425,6 +427,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = log.duration.totalMinutes;
             return minutes >= 180 && minutes <= 720;
         });
+        adminAverageLogs = filteredLogs;
+
+        renderAdminDashboardRange(adminAverageRange);
+    }
+
+    function renderAdminDashboardRange(range = "all") {
+        adminAverageRange = range;
+        const filteredLogs = filterAdminAverageLogs(range);
 
         // 日付ごとにグループ化して平均を出す
         const dailyAgg = {};
@@ -441,17 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const avgDurations = sortedDates.map(d => Math.round(dailyAgg[d].duration / dailyAgg[d].count));
         const avgQualities = sortedDates.map(d => (dailyAgg[d].quality / dailyAgg[d].count).toFixed(1));
 
-        // 全体平均の表示（フィルタリング後のデータを使用）
-        const totalMinutes = filteredLogs.length > 0 
-            ? Math.round(filteredLogs.reduce((s, l) => s + l.duration.totalMinutes, 0) / filteredLogs.length)
-            : 0;
-        const totalQuality = filteredLogs.length > 0 
-            ? (filteredLogs.reduce((s, l) => s + l.quality, 0) / filteredLogs.length).toFixed(1)
-            : "0.0";
-        
-        document.getElementById('admin-avg-duration').textContent = 
-            `${Math.floor(totalMinutes/60)}:${String(totalMinutes%60).padStart(2, "0")}`;
-        document.getElementById('admin-avg-quality').textContent = totalQuality;
+        renderAdminAverage(range);
 
         // 男女別の平均睡眠データ算出
         const maleLogs = filteredLogs.filter(l => l.gender === 'male');
@@ -549,6 +549,38 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAdminChart(sortedDates, avgDurations, avgQualities);
         renderAdminGenderCharts(sortedDates, maleDurations, femaleDurations, maleQualities, femaleQualities);
         renderAdminHabitAnalysis(filteredLogs);
+    }
+    // 期間別表示のためのフィルタリング関数（管理者パネル）
+    function getLocalDate(dateString) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    function filterAdminAverageLogs(range) {
+        if (range === "all") return adminAverageLogs;
+
+        const now = new Date();
+        const days = range === "week" ? 7 : 30;
+        return adminAverageLogs.filter(log => {
+            if (!log.date) return false;
+            const diffDays = (now - getLocalDate(log.date)) / (1000 * 60 * 60 * 24);
+            return diffDays >= 0 && diffDays < days;
+        });
+    }
+
+    function renderAdminAverage(range = "all") {
+        adminAverageRange = range;
+        const logs = filterAdminAverageLogs(range);
+        const totalMinutes = logs.length > 0
+            ? Math.round(logs.reduce((s, l) => s + l.duration.totalMinutes, 0) / logs.length)
+            : 0;
+        const totalQuality = logs.length > 0
+            ? (logs.reduce((s, l) => s + l.quality, 0) / logs.length).toFixed(1)
+            : "-";
+
+        document.getElementById('admin-avg-duration').textContent =
+            `${Math.floor(totalMinutes / 60)}:${String(totalMinutes % 60).padStart(2, "0")}`;
+        document.getElementById('admin-avg-quality').textContent = totalQuality;
     }
 
     function renderAdminChart(labels, durations, qualities) {
@@ -767,6 +799,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add("active");
             const range = btn.dataset.range;
             renderAverage(filterLogs(range));
+        });
+    });
+
+    // 管理者ダッシュボードの全体平均タブ
+    document.querySelectorAll("#admin-average-tabs .tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("#admin-average-tabs .tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            renderAdminDashboardRange(btn.dataset.range);
         });
     });
 
